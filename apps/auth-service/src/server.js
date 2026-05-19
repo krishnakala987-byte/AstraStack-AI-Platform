@@ -1,22 +1,24 @@
 const express = require("express");
-const dotenv = require("dotenv");
-
-dotenv.config();
+const client = require("prom-client");
 
 const app = express();
 
 app.use(express.json());
 
-const userRoutes = require("../routes/userRoutes");
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics();
 
-app.use("/", userRoutes);
+const register = client.register;
 
 app.get("/", (req, res) => {
-  res.send("auth-service running");
+  res.send("auth-service running on port 3000");
 });
 
-const PORT = process.env.PORT || 3000;
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", register.contentType);
+  res.end(await register.metrics());
+});
 
-app.listen(PORT, () => {
-  console.log(`auth-service running on port ${PORT}`);
+app.listen(3000, () => {
+  console.log("auth-service running on port 3000");
 });

@@ -1,25 +1,22 @@
 const express = require("express");
-const { createProxyMiddleware } = require("http-proxy-middleware");
+const client = require("prom-client");
 
 const app = express();
 
-app.use(
-  "/api/auth",
-  createProxyMiddleware({
-    target: "http://auth-service:3000",
-    changeOrigin: true,
-    pathRewrite: {
-      "^/api/auth": "",
-    },
-  })
-);
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics();
+
+const register = client.register;
 
 app.get("/", (req, res) => {
-  res.send("api-gateway running");
+  res.send("api-gateway running on port 8080");
 });
 
-const PORT = 8080;
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", register.contentType);
+  res.end(await register.metrics());
+});
 
-app.listen(PORT, () => {
-  console.log(`api-gateway running on port ${PORT}`);
+app.listen(8080, () => {
+  console.log("api-gateway running on port 8080");
 });
